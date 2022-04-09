@@ -26,19 +26,31 @@
 
 # 1. Importar bibliotecas para solicitudes, JSON y tiempo.
 
-<!!!REEMPLAZAR con código para librerías>
+import json
+import requests
+import time
+
 
 # 2. Complete la declaración if para solicitar al usuario el token de acceso de Webex Teams.
 choice = input ("¿Desea usar el token de Webex codificado? (y/n) ")
 
-<!!!REEMPLAZAR con instrucciones if para pedir al usuario el token de acceso de WebexTeams!!!>
-else:
-	AccessToken = "Bearer<!!!REEMPLAZAR con token codificado!!!>"
+print(choice)
+
+if choice == "n" or choice == "N":
+
+    while True:
+        AccessToken = input("Ingrese el token: ")
+        if len(AccessToken) >= 106:
+            break
+elif choice == "y" or choice == "Y":
+	AccessToken = 'OGQyNWVlZTgtZDFkMC00YWRjLWEzNzItZTcwYzlkNmRkYzE1MDI0YTkyMDAtZDZi_P0A1_f71b3b0c-41aa-4432-a8ec-0fba0a4e36ad'
 
 # 3. Proporcione la URL de la API de sala de Webex.
-r = requests.get ("<!!!!REEMPLAZAR URL!!!>",
-                    headers = {"Authorization": accessToken}
-                ).
+url = 'https://webexapis.com/v1/rooms'
+headers = {
+'Authorization': 'Bearer {}'.format(AccessToken)
+}
+r = requests.get(url, headers=headers)
 
 #####################################################################################
 # NO EDITAR NINGÚN BLOCK CON r.status_code
@@ -50,8 +62,8 @@ if not r.status_code == 200:
 print ("Lista de salas:")
 rooms = r.json () ["items"]
 for room in rooms:
-    <!!!REEMPLAZAR con código de impresión para terminar el bucle >
-
+    print(f'Sala: {room["title"]} Tipo: {room["type"]}')
+    
 #######################################################################################
 # BUSCAR SALA DE EQUIPOS DE WEBEX PARA MONITOREAR
 # - Busca el nombre de sala proporcionado por el usuario.
@@ -62,19 +74,20 @@ for room in rooms:
 
 while True:
     RoomNameToSearch = input ("¿Qué sala debe ser monitoreada para mensajes /location? ")
-    RoomIDToGetMessages = None
-    
+    RoomidTogetMessages = None
+
+
     for room in rooms:
-        if(room["title"].find(roomNameToSearch) != -1):
-            print ("Found rooms with the word " + roomNameToSearch)
+        if(room["title"].find(RoomNameToSearch) != -1):
+            print ("Found rooms with the word " + RoomNameToSearch)
 
- print (sala ["title"])
-            RoomidTogetMessages = room ["id"]
-            RoomTitleTogetMessages = room ["title"]
-            print ("sala encontrada:" + RoomTitleToGetMessages)
-            break
+        print (room["title"])
+        RoomidTogetMessages = room ["id"]
+        RoomTitleTogetMessages = room ["title"]
+        print ("sala encontrada:" + RoomTitleTogetMessages)
+        break
 
-    if (RoomIDToGetMessages == None):
+    if (RoomidTogetMessages == None):
         print ("Lo siento, no encontré ninguna sala con" + RoomNameToSearch +".")
         print ("Inténtelo de nuevo...")
     else:
@@ -88,14 +101,16 @@ while True:
 while True:
     time.sleep (1)
     GetParameters = {
-                            "roomId": RoomIDToGetMessages,
+                            "roomId": RoomidTogetMessages,
                             "max": 1
                     }
 # 5. Proporcione la URL de la API de mensajes de Webex.
-    r = requests.get ("<!!!!REEMPLAZAR URL!!!>", 
-                         params = getParameters, 
-                         headers = {"Authorization": accessToken}
-                    ).
+    url = 'https://webexapis.com/v1/messages'
+    headers = {
+    'Authorization': 'Bearer {}'.format(AccessToken)
+    }
+    
+    r = requests.get(url, headers=headers, params=GetParameters)
 
     if not r.status_code == 200:
         raise Exception ("Respuesta incorrecta de la API de Webex Teams. Status code: {} Texto: {}" .format (r.status_code, r.text))
@@ -107,72 +122,85 @@ while True:
     messages = json_data ["items"]
     message = messages [0] ["text"]
     print("Received message: " + message)
-    
+
+
     if message.find ("/") == 0:
         location = message [1:]
+    
+        print(location)
 # 6. Proporcione la clave de consumidor de la API de MapQuest.
         MapsaPigetParameters = { 
                                 "location": location, 
-                                "clave": "<!!!REEMPLAZAR con su clave de API de MapQuest!!!>"
+                                "key": "Fg8KMOPJkpKlIn0VRKSYOU8QUFYmcQl7"
                                }
 
 # 7. Proporcione la URL de la API de direcciones de MapQuest.
-        r = requests.get("<!!!REEMPLAZAR URL!!!>", 
+        r = requests.get("http://www.mapquestapi.com/geocoding/v1/address", 
                              params = MapsaPigetParameters
-                        ).
+                        )
         json_data = r.json()
 
-        if not json_data ["info"] ["statuscode"] == 0:
+        if not json_data["info"]["statuscode"] == 0:
             raise Exception ("Respuesta incorrecta de MapQuest API. Status code: {}" .format (r.statuscode))
 
-        locationResults = json_data ["results"] [0] ["ProvidedLocation"] ["location"]
-        print ("Ubicación:" + LocationResults)
+        locationResults = json_data["results"][0]["providedLocation"]["location"]
+        print ("Ubicación:" + locationResults)
 		
 # 8. Proporcione los valores clave de MapQuest para obtener la latitud y la longitud.
-        LocationLat = json_data ["<!!!!REEMPLAZAR!!!> con la ruta a la tecla de latitud!!!> "]
-        locationLng = json_data ["<!!!!REEMPLAZAR!!!> con la ruta a la clave de longitud!!!> "]
-        print ("Localización coordenadas GPS:" + str (LocationLat) + "," + str (LocationLng))
+        # print(json_data)
+        # print(json_data["results"])
+        # print(json_data["results"][0])
+        # print(json_data["results"][0]["locations"])
+        # print(json_data["results"][0]["locations"][0])
+        displayLatLong = json_data["results"][0]["locations"][0]["displayLatLng"]
+        
+        LocationLat = displayLatLong["lat"]
+        locationLng = displayLatLong["lng"]
+        print ("Localización coordenadas GPS:" + str (LocationLat) + "," + str (locationLng))
         
         IssaPigetParameters = { 
-                                "lat": locationLat, 
+                                "lat": LocationLat, 
                                 "lon": locationLng
                               }
 # 9. Proporcione la URL de la API de tiempos de paso de ISS.
-        r = requests.get("<!!!REPLACE with URL!!!>", 
+        r = requests.get("http://api.open-notify.org/iss-pass.json", 
                              params = IssaPigetParameters
-                        ).
+                        )
 
         json_data = r.json()
 
-        if not"response" en json_data:
+        if not "response" in json_data:
             raise Exception ("Respuesta incorrecta de la API open-notify.org. Status code: {} Texto: {}" .format (r.status_code, r.text))
 
 # 10. Proporcione los valores clave ISS del tiempo de espera y duración.
-        risetimeinEpochSeconds = json_data ["<!!!!REEMPLAZAR!!!> con la ruta a la clave de tiempo de ascenso!!!> "]
-        durationInSeconds = json_data ["<!!!!REEMPLAZAR!!!> con la ruta a la clave de duración!!!> "]
+        risetimeinEpochSeconds = json_data ["response"][0]["risetime"]
+        durationInSeconds = json_data ["response"][0]["duration"]
 
 # 11. Convierta el valor de risetime epoch en una fecha y hora legible para humanos.
-        risetimeInFormattedString = <!!!REEMPLAZAR con código de conversión!!!>
+        risetimeInFormattedString = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(risetimeinEpochSeconds))
 
 # 12. Complete el código para formatear el mensaje de respuesta.
 # Ejemplo de resultado de un mensaje de respuesta: En Austin, Texas, la ISS sobrevolará el jue Jun 18 18:42:36 2020 durante 242 segundos.
-        responseMessage = "In {} the ISS will fly over on {} for {} seconds.".format(<!!!REPLACE with required variables!!!>)
+        responseMessage = f"In {location} the ISS will fly over on {risetimeInFormattedString} for {durationInSeconds} seconds."
 
-print ("Envío a Webex:" +ResponseSage)
+        print ("Envío a Webex:" + responseMessage)
 
-# 13. Complete el código para publicar el mensaje en la sala de Webex. 
-        HttpHeaders = { 
-                             "Authorization": <!!!REEMPLAZAR!!!>,
-                             "Content-Type": "application/json"
-                           }
-        PostData = {
-                            "RoomID": <!!!REEMPLAZAR!!!>,
-                            "text": <!!!REEMPLAZAR!!!>
+    # 13. Complete el código para publicar el mensaje en la sala de Webex. 
+        HttpHeaders = {
+                        "Authorization": 'Bearer {}'.format(AccessToken),
+                        "Content-Type": "application/json"
                         }
+        PostData = {
+                            "roomId": RoomidTogetMessages,
+                            "text": responseMessage
+                        }
+        url = 'https://webexapis.com/v1/messages'
 
-        r = requests.post ("<!!!!REEMPLAZAR URL!!!>", 
-                              data = json.dumps (<!!!REEMPLAZAR!!!>), 
-                              headers= <!!!REEMPLAZAR!!!>
-                         ).
+        r = requests.post (url, 
+                                data = json.dumps(PostData), 
+                                headers= HttpHeaders
+                            )
         if not r.status_code == 200:
             raise Exception ("Respuesta incorrecta de la API de Webex. Status code: {} Text: {}" .format (r.status_code, r.text))
+
+        exit("El programa ha finalizado con éxito")
